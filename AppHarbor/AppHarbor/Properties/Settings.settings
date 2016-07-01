@@ -1,0 +1,14 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="AppHarbor.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="connString" Type="(Connection string)" Scope="Application">
+      <DesignTimeValue Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;SerializableConnectionString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;ConnectionString&gt;Data Source=e873e7e5-cf79-46de-aa5e-a63600f04b8f.sqlserver.sequelizer.com;Initial Catalog=dbe873e7e5cf7946deaa5ea63600f04b8f;User ID=kzqeetgsvkjctkog;Password=btFsh6mwoAd52m7k5ovrvTQ6wFhEkGr4G38jbP6ZiagUfgprt6PjczwpLH5HXPkN;MultipleActiveResultSets=True&lt;/ConnectionString&gt;
+  &lt;ProviderName&gt;System.Data.SqlClient&lt;/ProviderName&gt;
+&lt;/SerializableConnectionString&gt;</DesignTimeValue>
+      <Value Profile="(Default)">Data Source=e873e7e5-cf79-46de-aa5e-a63600f04b8f.sqlserver.sequelizer.com;Initial Catalog=dbe873e7e5cf7946deaa5ea63600f04b8f;User ID=kzqeetgsvkjctkog;Password=btFsh6mwoAd52m7k5ovrvTQ6wFhEkGr4G38jbP6ZiagUfgprt6PjczwpLH5HXPkN;MultipleActiveResultSets=True</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

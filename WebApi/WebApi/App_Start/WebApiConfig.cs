@@ -1,7 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using DAW.Utils;
+using Drum;
+using Newtonsoft.Json;
 using System.Web.Http;
+using System.Web.Http.Cors;
+using WebApi.Hal;
 
 namespace WebApi
 {
@@ -10,15 +12,41 @@ namespace WebApi
         public static void Register(HttpConfiguration config)
         {
             // Web API configuration and services
+            var cors = new EnableCorsAttribute("http://localhost:8000", "*", "*");
+            config.EnableCors(cors);
 
             // Web API routes
-            config.MapHttpAttributeRoutes();
+            config.MapHttpAttributeRoutesAndUseUriMaker();
 
+            //project route            
             config.Routes.MapHttpRoute(
-                name: "DefaultApi",
-                routeTemplate: "api/{controller}/{id}",
-                defaults: new { id = RouteParameter.Optional }
-            );
+                "projects",
+                Const_Strings.PROJECT_ROUTE_PREFIX
+                );
+
+
+            //issues route            
+            config.Routes.MapHttpRoute(
+                "issues",
+                Const_Strings.ISSUE_ROUTE_PREFIX
+                );
+
+
+            //comments route            
+            config.Routes.MapHttpRoute(
+                "comments",
+                Const_Strings.COMMENT_ROUTE_PREFIX
+                );
+
+
+            config.Formatters.Remove(config.Formatters.JsonFormatter);
+            config.Formatters.Remove(config.Formatters.XmlFormatter);
+
+            var jsonhal = new JsonHalMediaTypeFormatter();
+            jsonhal.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+            jsonhal.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;
+            jsonhal.SerializerSettings.Formatting = Formatting.Indented;
+            config.Formatters.Add(jsonhal);
         }
     }
 }
