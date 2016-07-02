@@ -11,10 +11,19 @@ namespace WebApi
     {
         public static void Register(HttpConfiguration config)
         {
-            // Web API configuration and services
+            ConfigureCors(config);
+            ConfigureHttpRoutes(config);
+            ConfigureFormatters(config);
+        }
+
+        private static void ConfigureCors(HttpConfiguration config)
+        {
             var cors = new EnableCorsAttribute("http://localhost:8000", "*", "*");
             config.EnableCors(cors);
+        }
 
+        private static void ConfigureHttpRoutes(HttpConfiguration config)
+        {
             // Web API routes
             config.MapHttpAttributeRoutesAndUseUriMaker();
 
@@ -37,8 +46,10 @@ namespace WebApi
                 "comments",
                 Const_Strings.COMMENT_ROUTE_PREFIX
                 );
+        }
 
-
+        private static void ConfigureFormatters(HttpConfiguration config)
+        {
             config.Formatters.Remove(config.Formatters.JsonFormatter);
             config.Formatters.Remove(config.Formatters.XmlFormatter);
 
@@ -47,6 +58,6 @@ namespace WebApi
             jsonhal.SerializerSettings.DefaultValueHandling = DefaultValueHandling.Ignore;
             jsonhal.SerializerSettings.Formatting = Formatting.Indented;
             config.Formatters.Add(jsonhal);
-        }
+        }        
     }
 }
