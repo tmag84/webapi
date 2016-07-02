@@ -26,9 +26,9 @@ namespace WebApi.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=e873e7e5-cf79-46de-aa5e-a63600f04b8f.sqlserver.sequelizer.com;Initial" +
-            " Catalog=dbe873e7e5cf7946deaa5ea63600f04b8f;User ID=kzqeetgsvkjctkog;Password=bt" +
-            "Fsh6mwoAd52m7k5ovrvTQ6wFhEkGr4G38jbP6ZiagUfgprt6PjczwpLH5HXPkN;MultipleActiveRes" +
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=46fc1a90-01b6-48fa-bcf4-a637014000a3.sqlserver.sequelizer.com;Initial" +
+            " Catalog=db46fc1a9001b648fabcf4a637014000a3;User ID=gsoubteozzmmmsic;Password=Ux" +
+            "FfFFDRUBibwuoaBLfJNjHgCASxZCTsUfWwrueRoYdJKimKPBb2LSyKXzJeVfZr;MultipleActiveRes" +
             "ultSets=True")]
         public string connString {
             get {
