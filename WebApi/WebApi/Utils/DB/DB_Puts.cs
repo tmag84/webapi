@@ -23,22 +23,22 @@ namespace DAW.Utils.DB
                         throw new NotFoundException(string.Format("The issue {0} was not found in the project {1}.", id, name));
                     }
 
-                    if (DB_AuxGets.GetIssueById(name, id, con).state == "closed")
+                    if (DB_AuxGets.GetIssueById(name, id, con).issue_state == "closed")
                     {
                         throw new ClosedIssueException(string.Format("The issue {0} is closed, so it does not allow edit to comments.", id));
                     }
 
                     //gets existing comment to edit
-                    CommentModel old_model = DB_AuxGets.GetComments(name, id, con).Find(c => c.Id == model.Id);
+                    CommentModel old_model = DB_AuxGets.GetComments(name, id, con).Find(c => c.comment_id == model.comment_id);
                     if (old_model == null)
                     {
-                        throw new NotFoundException("The comment with id " + model.Id + " does not exist in this issue.");
+                        throw new NotFoundException("The comment with id " + model.comment_id + " does not exist in this issue.");
                     }
 
                     using (SqlCommand cmd = con.CreateCommand())
                     {
-                        cmd.CommandText = "update comment set text=@text and modifiedDate=GETUTCDATE() where name=@name and issue_id=@issue_id and id=@id";
-                        SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
+                        cmd.CommandText = "update comment set comment_text=@text and modifiedDate=GETUTCDATE() where proj_name=@name and issue_id=@issue_id and comment_id=@id";
+                        SqlParameter proj_name = new SqlParameter("@proj_name", System.Data.SqlDbType.VarChar, 30);
                         proj_name.Value = name;
                         cmd.Parameters.Add(proj_name);
 
@@ -52,7 +52,7 @@ namespace DAW.Utils.DB
                         cmd.Parameters.Add(cmt_id);
 
                         SqlParameter cmt_text = new SqlParameter("@text", System.Data.SqlDbType.VarChar, 200);
-                        cmt_text.Value = model.Text;
+                        cmt_text.Value = model.comment_text;
                         cmd.Parameters.Add(cmt_text);
 
                         cmd.ExecuteReader();
@@ -91,8 +91,8 @@ namespace DAW.Utils.DB
 
                     using (SqlCommand cmd = con.CreateCommand())
                     {
-                        cmd.CommandText = "update issue set state=@state where name=@name and id=@id";
-                        SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
+                        cmd.CommandText = "update issue set issue_state=@state where proj_name=@name and issue_id=@id";
+                        SqlParameter proj_name = new SqlParameter("@proj_name", System.Data.SqlDbType.VarChar, 30);
                         proj_name.Value = name;
                         cmd.Parameters.Add(proj_name);
 

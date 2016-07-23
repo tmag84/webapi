@@ -33,18 +33,10 @@ namespace WebApi
                 Const_Strings.PROJECT_ROUTE_PREFIX
                 );
 
-
             //issues route            
             config.Routes.MapHttpRoute(
                 "issues",
                 Const_Strings.ISSUE_ROUTE_PREFIX
-                );
-
-
-            //comments route            
-            config.Routes.MapHttpRoute(
-                "comments",
-                Const_Strings.COMMENT_ROUTE_PREFIX
                 );
         }
 

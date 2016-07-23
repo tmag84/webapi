@@ -58,11 +58,12 @@ namespace WebApi
             //   appId: "",
             //   appSecret: "");
 
-            //app.UseGoogleAuthentication(new GoogleOAuth2AuthenticationOptions()
-            //{
-            //    ClientId = "",
-            //    ClientSecret = ""
-            //});
+            
+            app.UseGoogleAuthentication(new GoogleOAuth2AuthenticationOptions()
+            {
+                ClientId = "182417448960-j0mnmkkl07ruh597lot5ntn2j1321tet.apps.googleusercontent.com",
+                ClientSecret = "6tIlvvYMQaMSsLxlgYNxgymp"
+            });
         }
     }
 }

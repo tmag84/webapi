@@ -14,7 +14,7 @@ namespace DAW.Utils.DB
             ProjectModel project = null;
             using (SqlCommand cmd = con.CreateCommand())
             {
-                cmd.CommandText = "select * from project where name=@name";
+                cmd.CommandText = "select * from project where proj_name=@name";
                 SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                 proj_name.Value = name;
                 cmd.Parameters.Add(proj_name);
@@ -47,7 +47,7 @@ namespace DAW.Utils.DB
             List<IssueModel> issues = new List<IssueModel>();
             using (SqlCommand cmd = con.CreateCommand())
             {
-                cmd.CommandText = "select * from issue where name=@name";
+                cmd.CommandText = "select * from issue where proj_name=@name";
                 SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                 proj_name.Value = name;
                 cmd.Parameters.Add(proj_name);
@@ -75,7 +75,7 @@ namespace DAW.Utils.DB
             IssueModel issue = null;
             using (SqlCommand cmd = con.CreateCommand())
             {
-                cmd.CommandText = "select * from Issue where name=@name and id=@id";
+                cmd.CommandText = "select * from Issue where proj_name=@name and issue_id=@id";
                 SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                 proj_name.Value = name;
                 cmd.Parameters.Add(proj_name);
@@ -118,12 +118,12 @@ namespace DAW.Utils.DB
                 //if id==0, then we want all the project tags
                 if (id == 0)
                 {
-                    cmd.CommandText = "select * from Project_Tag where name=@name";
+                    cmd.CommandText = "select * from Project_Tag where proj_name=@name";
                 }
                 //otherwise, we only want the tags for the issue
                 else
                 {
-                    cmd.CommandText = "select * from Issue_Tag where name=@name and id=@id";
+                    cmd.CommandText = "select * from Issue_Tag where proj_name=@name and issue_id=@id";
                     SqlParameter iss_id = new SqlParameter("@id", System.Data.SqlDbType.Int);
                     iss_id.Value = id;
                     cmd.Parameters.Add(iss_id);
@@ -136,7 +136,7 @@ namespace DAW.Utils.DB
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    tags.Add(dr["tag"].ToString());
+                    tags.Add(dr["proj_tag"].ToString());
                 }
                 dr.Close();
             }
@@ -150,7 +150,7 @@ namespace DAW.Utils.DB
             //command to get all the project issue comments
             using (SqlCommand cmd = con.CreateCommand())
             {
-                cmd.CommandText = "select id,text,creationDate from Comment where name=@name and issue_id=@id order by creationDate desc";
+                cmd.CommandText = "select comment_id,comment_text,comment_creationDate from Comment where proj_name=@name and issue_id=@id order by comment_creationDate desc";
 
                 SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                 proj_name.Value = name;
@@ -183,11 +183,11 @@ namespace DAW.Utils.DB
             //command to get all the project issues
             using (SqlCommand cmd = con.CreateCommand())
             {
-                cmd.CommandText = "select state from State";
+                cmd.CommandText = "select issue_state from State";
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    states.Add(dr["state"].ToString());
+                    states.Add(dr["issue_state"].ToString());
                 }
             }
             return states;

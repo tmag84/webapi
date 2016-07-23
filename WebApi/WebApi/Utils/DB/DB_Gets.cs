@@ -87,10 +87,10 @@ namespace DAW.Utils.DB
             try
             {
                 proj = GetProjectByName(name, pageSize, page);
-                proj.issues = proj.issues.FindAll(i => i.title.Contains(title));
+                proj.issues = proj.issues.FindAll(i => i.issue_title.Contains(title));
                 proj.totalIssues = proj.issues.Count;
 
-                if (proj.issues.Count!=0 && proj.issues.Count < pageSize*page)
+                if (pageSize * (page - 1) > proj.issues.Count)
                 {
                     throw new PaginationException(string.Format("The pagination settings are out of bounds for the project {0}.", name));
                 }
@@ -122,19 +122,6 @@ namespace DAW.Utils.DB
                     issue.tags = DB_AuxGets.GetTags(name, id, con);
 
                     issue.comments = DB_AuxGets.GetComments(name, id, con);
-                    //issue.totalcomments = issue._embedded.Count;
-
-                    //issue._embedded = issue._embedded
-                    //    .Skip(pageSize * (page - 1))
-                    //    .Take(pageSize)
-                    //    .ToList();
-
-
-                    //if (issue._embedded.Count == 0)
-                    //{
-                    //    throw new PaginationException(string.Format("The pagination settings are out of bounds for the issue {0}, belonging to project {1}.", id, name));
-                    //}
-
                 }
                 return issue;
             }
@@ -143,8 +130,6 @@ namespace DAW.Utils.DB
                 throw new InternalDBException(e.ToString());
             }
         }
-
-
 
         //get issues_info by proj
         public static List<IssueModel> GetAllProjectIssues(string name)
@@ -162,24 +147,6 @@ namespace DAW.Utils.DB
                     {
                         throw new NotFoundException(string.Format("No issues, belonging to project {1}, were found.", name));
                     }
-
-                    
-                    //issue.tags = DB_AuxGets.GetTags(name, id, con);
-                    //issue._embedded = DB_AuxGets.GetComments(name, id, con);
-                    //issue.totalcomments = issue._embedded.Count;
-
-                    //issue._embedded = issue._embedded
-                    //    .Skip(pageSize * (page - 1))
-                    //    .Take(pageSize)
-                    //    .ToList();
-
-
-                    //if (issue._embedded.Count == 0)
-                    //{
-                    //    throw new PaginationException(string.Format("The pagination settings are out of bounds for the issue {0}, belonging to project {1}.", id, name));
-                    //}
-                    
-
                 }
                 return issues;
             }
@@ -206,33 +173,13 @@ namespace DAW.Utils.DB
                     {
                         throw new NotFoundException(string.Format("The comments, belonging to project {1} issue {2}, were not found.", name,id));
                     }
-
-
-                    //issue.tags = DB_AuxGets.GetTags(name, id, con);
-                    //issue._embedded = DB_AuxGets.GetComments(name, id, con);
-                    //issue.totalcomments = issue._embedded.Count;
-
-                    //issue._embedded = issue._embedded
-                    //    .Skip(pageSize * (page - 1))
-                    //    .Take(pageSize)
-                    //    .ToList();
-
-
-                    //if (issue._embedded.Count == 0)
-                    //{
-                    //    throw new PaginationException(string.Format("The pagination settings are out of bounds for the issue {0}, belonging to project {1}.", id, name));
-                    //}
-
-
                 }
                 return comments;
             }
             catch (SqlException e)
             {
                 throw new InternalDBException(e.ToString());
-            }
-
-           
+            }           
         }
     }
 }

@@ -17,7 +17,7 @@ namespace DAW.Controllers
     [RoutePrefix(Const_Strings.PROJECT_ROUTE_PREFIX)]
     public class ProjectsController : ApiController
     {
-        private const int DEFAULT_PAGESIZE = 1;
+        private const int DEFAULT_PAGESIZE = 5;
 
         [HttpGet,Route("")]
         public HttpResponseMessage GetAllProjects()
@@ -29,14 +29,15 @@ namespace DAW.Controllers
                 List<ProjectModel> projects = DB_Gets.GetAllProjects(); 
                 foreach(ProjectModel p in projects)
                 {
-                    //Href e Rel for Self 
-                    p.Href = uriMaker.UriFor(c => c.GetProjectByName(p.name, DEFAULT_PAGESIZE, 1)).AbsoluteUri;
+                    p.Links.Add(new Link(p.proj_name, uriMaker.UriFor(c=>c.GetProjectByName(p.proj_name,DEFAULT_PAGESIZE,1)).AbsolutePath));
                     p.Rel = "projects";
                 }
 
                 ProjectsModel projects_hal = new ProjectsModel(projects);
-                projects_hal.Href = uriMaker.UriFor(c => c.GetAllProjects()).AbsoluteUri;
-               
+                projects_hal.Href = uriMaker.UriFor(c => c.GetAllProjects()).AbsolutePath;               
+                projects_hal.Links.Add(new Link("create_project", uriMaker.UriFor(c=>c.PostProject(null)).AbsolutePath));
+                projects_hal.Links.Add(new Link("search_project", uriMaker.UriFor(c =>c.GetProjectsByNameSearch("")).AbsolutePath));
+
                 resp = Request.CreateResponse<ProjectsModel>(HttpStatusCode.OK, projects_hal);
             }
             catch (MyException e)
@@ -73,21 +74,27 @@ namespace DAW.Controllers
             return resp;
         }
 
-        [HttpGet, Route("search-for-project/{name}")]
+        [HttpGet, Route("search-for-project")]
         public HttpResponseMessage GetProjectsByNameSearch(string name)
         {
             HttpResponseMessage resp;
+            if (name == null)
+            {
+                return GetAllProjects();
+            }
             var uriMaker = Request.TryGetUriMakerFor<ProjectsController>();
             try
             {
-                List<ProjectModel> projects = DB_Gets.GetAllProjects().FindAll(p => p.name.Contains(name));
+                List<ProjectModel> projects = DB_Gets.GetAllProjects().FindAll(p => p.proj_name.Contains(name));
                 foreach (ProjectModel p in projects)
                 {
-                    p.Href = uriMaker.UriFor(c => c.GetProjectByName(p.name, DEFAULT_PAGESIZE, 1)).AbsoluteUri;
+                    p.Links.Add(new Link(p.proj_name, uriMaker.UriFor(c => c.GetProjectByName(p.proj_name, DEFAULT_PAGESIZE, 1)).AbsolutePath));
                     p.Rel = "projects";
                 }
                 ProjectsModel projects_hal = new ProjectsModel(projects);
-                projects_hal.Href = uriMaker.UriFor(c => c.GetAllProjects()).AbsoluteUri;
+                projects_hal.Links.Add(new Link("self", uriMaker.UriFor(c => c.GetAllProjects()).AbsolutePath));
+                projects_hal.Links.Add(new Link("create_project", uriMaker.UriFor(c => c.PostProject(null)).AbsolutePath));
+                projects_hal.Links.Add(new Link("search_project", uriMaker.UriFor(c => c.GetProjectsByNameSearch("")).AbsolutePath));
 
                 resp = Request.CreateResponse<ProjectsModel>(HttpStatusCode.OK, projects_hal);
             }
@@ -111,8 +118,7 @@ namespace DAW.Controllers
             try
             {
                 ProjectModel project = DB_Gets.GetProjectByName(name, pageSize, page);
-                project.Href = projectUriMaker.UriFor(c => c.GetProjectByName(name, pageSize, page)).AbsoluteUri;
-                project.Rel = "projects";
+                project.Links.Add(new Link("self", projectUriMaker.UriFor(c => c.GetProjectByName(name, pageSize, page)).AbsolutePath));
 
                 project.issues = project.issues
                         .Skip(pageSize * (page - 1))
@@ -122,7 +128,7 @@ namespace DAW.Controllers
                 var issueUriMaker = Request.TryGetUriMakerFor<IssuesController>();
                 foreach (IssueModel i in project.issues)
                 {
-                    i.Href = issueUriMaker.UriFor(c => c.GetIssueById(name, i.id)).AbsoluteUri;
+                    i.Links.Add(new Link(i.issue_id.ToString(), issueUriMaker.UriFor(c => c.GetIssueById(name, i.issue_id)).AbsolutePath));
                     i.Rel = "issues";
                 }
 
@@ -130,18 +136,18 @@ namespace DAW.Controllers
                 {
                     project.Links.Add(new Link("prev", projectUriMaker.UriFor(c => c.GetProjectByName(name, pageSize, page - 1)).AbsoluteUri));
                 }
-                //checks if there's enough issues to put in next page              
                 if ((page * pageSize) < project.totalIssues)
                 {
                     project.Links.Add(new Link("next", projectUriMaker.UriFor(c => c.GetProjectByName(name, pageSize, page + 1)).AbsoluteUri));
                 }
-
-
-                var project_link = new Link("all-projects", projectUriMaker.UriFor(p => p.GetAllProjects()).AbsoluteUri);
-                project.Links.Add(project_link);
-
+                                
+                project.Links.Add(new Link("all_projects", projectUriMaker.UriFor(p => p.GetAllProjects()).AbsolutePath));                                
+                project.Links.Add(new Link("add_tag", projectUriMaker.UriFor(p => p.PostTagInProject(name, null)).AbsolutePath));
+                project.Links.Add(new Link("delete_tag", projectUriMaker.UriFor(p => p.DeleteTagFromProject(name, null)).AbsolutePath));
+                project.Links.Add(new Link("create_issue", issueUriMaker.UriFor(p => p.PostIssue(name,null)).AbsolutePath));
+                project.Links.Add(new Link("search_issue",projectUriMaker.UriFor(p=>p.GetProjectIssueByTitleSearch(name,null,DEFAULT_PAGESIZE,1)).AbsolutePath));
+                
                 resp = Request.CreateResponse<ProjectModel>(HttpStatusCode.OK, project);
-
             }
             catch (MyException e)
             {
@@ -160,40 +166,44 @@ namespace DAW.Controllers
         [HttpGet, Route("{name}/number/{page:int}")]
         public HttpResponseMessage GetProjectByNameWithPage(string name, int pageSize = DEFAULT_PAGESIZE,int page = 1)
         {
-            return GetProjectByName(name,DEFAULT_PAGESIZE,page);
+            return GetProjectByName(name,pageSize,page);
         }
 
-        [HttpGet, Route("{name}/search-for-issue")]
+        [HttpGet, Route("{name}/search-project-issue")]
         public HttpResponseMessage GetProjectIssueByTitleSearch(string name, string title, int pageSize = DEFAULT_PAGESIZE, int page = 1)
         {
+            if (title == null)
+            {
+                return GetProjectByName(name);
+            }
             HttpResponseMessage resp;
             var projectUriMaker = Request.TryGetUriMakerFor<ProjectsController>();
             try
             {
                 ProjectModel project = DB_Gets.SearchProjectIssues(name, title, pageSize, page);
-
-                project.Href = projectUriMaker.UriFor(c => c.GetProjectByName(name, pageSize, page)).AbsoluteUri;
-                project.Rel = "project";
+                project.Links.Add(new Link("self", projectUriMaker.UriFor(c => c.GetProjectByName(name, pageSize, page)).AbsolutePath));
 
                 var issueUriMaker = Request.TryGetUriMakerFor<IssuesController>();
                 foreach (IssueModel i in project.issues)
                 {
-                    i.Href = issueUriMaker.UriFor(c => c.GetIssueById(name, i.id)).AbsoluteUri;
+                    i.Links.Add(new Link(i.issue_id.ToString(), issueUriMaker.UriFor(c => c.GetIssueById(name, i.issue_id)).AbsolutePath));
                     i.Rel = "issues";
-                }
+                }                
 
                 if (page > 1)
                 {
-                    project.Links.Add(new Link("prev", projectUriMaker.UriFor(c => c.GetProjectIssueByTitleSearch(name, title, pageSize, page - 1)).AbsoluteUri));
+                    project.Links.Add(new Link("prev", projectUriMaker.UriFor(c => c.GetProjectIssueByTitleSearch(name, title, pageSize, page - 1)).AbsolutePath));
                 }
-                //checks if there's enough issues to put in next page              
                 if ((page * pageSize) < project.totalIssues)
                 {
-                    project.Links.Add(new Link("next", projectUriMaker.UriFor(c => c.GetProjectIssueByTitleSearch(name, title, pageSize, page + 1)).AbsoluteUri));
+                    project.Links.Add(new Link("next", projectUriMaker.UriFor(c => c.GetProjectIssueByTitleSearch(name, title, pageSize, page + 1)).AbsolutePath));
                 }
 
-                var project_link = new Link("all-projects", projectUriMaker.UriFor(p => p.GetAllProjects()).AbsoluteUri);
-                project.Links.Add(project_link);
+                project.Links.Add(new Link("all-projects", projectUriMaker.UriFor(p => p.GetAllProjects()).AbsolutePath));
+                project.Links.Add(new Link("add_tag", projectUriMaker.UriFor(p => p.PostTagInProject(name, null)).AbsolutePath));
+                project.Links.Add(new Link("delete_tag", projectUriMaker.UriFor(p => p.DeleteTagFromProject(name, null)).AbsolutePath));
+                project.Links.Add(new Link("create_issue", issueUriMaker.UriFor(p => p.PostIssue(name, null)).AbsolutePath));
+                project.Links.Add(new Link("search_issue", projectUriMaker.UriFor(p => p.GetProjectIssueByTitleSearch(name, null, DEFAULT_PAGESIZE, 1)).AbsolutePath));
 
                 resp = Request.CreateResponse<ProjectModel>(HttpStatusCode.OK, project);
             }
@@ -252,6 +262,5 @@ namespace DAW.Controllers
             }
             return resp;
         }
-
     }
 }

@@ -79,11 +79,11 @@ namespace DAW.Utils.DB
             List<IssueModel> issues = DB_AuxGets.GetProjectIssues(name, con);
             foreach (IssueModel issue in issues)
             {
-                DeleteTagFromIssue(name, issue.id, tag, con);
+                DeleteTagFromIssue(name, issue.issue_id, tag, con);
             }
             using (SqlCommand cmd = con.CreateCommand())
             {
-                cmd.CommandText = "delete from Project_Tag where name=@name and tag=@tag";
+                cmd.CommandText = "delete from Project_Tag where proj_name=@name and proj_tag=@tag";
 
                 SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                 proj_name.Value = name;
@@ -103,7 +103,7 @@ namespace DAW.Utils.DB
         {
             using (SqlCommand cmd = con.CreateCommand())
             {
-                cmd.CommandText = "delete from Issue_Tag where name=@name id=@id and tag=@tag";
+                cmd.CommandText = "delete from Issue_Tag where proj_name=@name and issue_id=@id and proj_tag=@tag";
 
                 SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                 proj_name.Value = name;

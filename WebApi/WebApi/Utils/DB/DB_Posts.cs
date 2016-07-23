@@ -17,17 +17,17 @@ namespace DAW.Utils.DB
                     con.ConnectionString = DB_Config.GetConnectionString();
                     con.Open();
 
-                    ProjectModel proj = DB_AuxGets.GetProjectByName(model.name, con);
+                    ProjectModel proj = DB_AuxGets.GetProjectByName(model.proj_name, con);
                     if (proj != null)
                     {
-                        throw new DuplicatedItemException(string.Format("The project {0} already exists.", model.name));
+                        throw new DuplicatedItemException(string.Format("The project {0} already exists.", model.proj_name));
                     }
 
                     using (SqlCommand cmd = con.CreateCommand())
                     {
-                        cmd.CommandText = "insert into project(name,creationDate) values(@name,GETUTCDATE())";
+                        cmd.CommandText = "insert into project(proj_name,proj_creationDate) values(@name,GETUTCDATE())";
                         SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
-                        proj_name.Value = model.name;
+                        proj_name.Value = model.proj_name;
                         cmd.Parameters.Add(proj_name);
                         cmd.ExecuteNonQuery();
                     }
@@ -62,7 +62,7 @@ namespace DAW.Utils.DB
                     }
                     using (SqlCommand cmd = con.CreateCommand())
                     {
-                        cmd.CommandText = "insert into Project_Tag(name,tag) values(@name,@tag)";
+                        cmd.CommandText = "insert into Project_Tag(proj_name,proj_tag) values(@name,@tag)";
 
                         SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                         proj_name.Value = name;
@@ -93,25 +93,19 @@ namespace DAW.Utils.DB
                     con.ConnectionString = DB_Config.GetConnectionString();
                     con.Open();
 
-                    int id = DB_AuxGets.GetProjectIssues(name, con).Count + 1;
-
                     using (SqlCommand cmd = con.CreateCommand())
                     {
-                        cmd.CommandText = "insert into issue(name,id,title,description,creationDate) values(@name,@id,@title,@description,GETUTCDATE())";
+                        cmd.CommandText = "insert into issue(proj_name,issue_title,issue_description,issue_creationDate) values(@name,@title,@description,GETUTCDATE())";
                         SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                         proj_name.Value = name;
                         cmd.Parameters.Add(proj_name);
 
-                        SqlParameter iss_id = new SqlParameter("@id", System.Data.SqlDbType.Int);
-                        iss_id.Value = id;
-                        cmd.Parameters.Add(iss_id);
-
                         SqlParameter iss_title = new SqlParameter("@title", System.Data.SqlDbType.VarChar, 100);
-                        iss_title.Value = model.title;
+                        iss_title.Value = model.issue_title;
                         cmd.Parameters.Add(iss_title);
 
                         SqlParameter iss_description = new SqlParameter("@description", System.Data.SqlDbType.VarChar, 500);
-                        iss_description.Value = model.description;
+                        iss_description.Value = model.issue_description;
                         cmd.Parameters.Add(iss_description);
 
                         cmd.ExecuteReader();
@@ -141,14 +135,14 @@ namespace DAW.Utils.DB
                     {
                         throw new NotFoundException(string.Format("The issue {0} was not found.", id));
                     }
-                    //if (issue.tags.Contains(tag))
-                    //{
-                    //    throw new DuplicatedItemException(string.Format("The tag {0} already exists in the issue {1}, belonging to project {2}.", tag, id, name));
-                    //}
+                    if (issue.tags.Contains(tag))
+                    {
+                        throw new DuplicatedItemException(string.Format("The tag {0} already exists in the issue {1}, belonging to project {2}.", tag, id, name));
+                    }
 
                     using (SqlCommand cmd = con.CreateCommand())
                     {
-                        cmd.CommandText = "insert into issue_tag(name,id,tag) values(@name,@id,@tag)";
+                        cmd.CommandText = "insert into issue_tag(proj_name,issue_id,proj_tag) values(@name,@id,@tag)";
                         SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 30);
                         proj_name.Value = name;
                         cmd.Parameters.Add(proj_name);
@@ -188,13 +182,13 @@ namespace DAW.Utils.DB
                     {
                         throw new NotFoundException("The issue " + id + " does not exist in the project " + name + ".");
                     }
-                    if (issue.state == "closed")
+                    if (issue.issue_state == "closed")
                     {
                         throw new ClosedIssueException("The issue " + id + " in the project " + name + " is closed, so it doesn't allow new comments.");
                     }
                     using (SqlCommand cmd = con.CreateCommand())
                     {
-                        cmd.CommandText = "insert into comment(name,issue_id,id,text,creationDate) values(@name,@issue_id,@id,@text,GETUTCDATE())";
+                        cmd.CommandText = "insert into comment(proj_name,issue_id,comment_id,comment_text,comment_creationDate) values(@name,@issue_id,@id,@text,GETUTCDATE())";
                         SqlParameter proj_name = new SqlParameter("@name", System.Data.SqlDbType.VarChar, 100);
                         proj_name.Value = name;
                         cmd.Parameters.Add(proj_name);
@@ -206,11 +200,19 @@ namespace DAW.Utils.DB
                         SqlParameter cmt_id = new SqlParameter("@id", System.Data.SqlDbType.Int);
                         //because comments can't be removed, the number of comments stored +1 = id for new comment
 
-                        cmt_id.Value = issue.comments.Count + 1;
+                        if (issue.comments==null)
+                        {
+                            cmt_id.Value = 1;
+                        }
+                        else
+                        {
+                            cmt_id.Value = issue.comments.Count + 1;
+                        }
+                       
                         cmd.Parameters.Add(cmt_id);
 
                         SqlParameter cmt_text = new SqlParameter("@text", System.Data.SqlDbType.VarChar, 200);
-                        cmt_text.Value = model.Text;
+                        cmt_text.Value = model.comment_text;
                         cmd.Parameters.Add(cmt_text);
 
                         cmd.ExecuteReader();

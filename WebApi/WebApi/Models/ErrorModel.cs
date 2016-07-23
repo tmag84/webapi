@@ -1,7 +1,7 @@
 ﻿using WebApi.Hal;
 namespace DAW.Models
 {
-    class ErrorModel 
+    class ErrorModel
     {
         public string type { get; set; }
         public string title { get; set; }

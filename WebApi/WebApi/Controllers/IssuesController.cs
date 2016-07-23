@@ -16,30 +16,35 @@ namespace DAW.Controllers
     [RoutePrefix(Const_Strings.ISSUE_ROUTE_PREFIX)]
     public class IssuesController : ApiController
     {
-        private const int DEFAULT_PAGESIZE = 1;
+        private const int DEFAULT_PAGESIZE = 5;
    
         [HttpGet, Route("{id:int}")]
         public HttpResponseMessage GetIssueById(string name, int id)
         {
             HttpResponseMessage resp;
+            var projectUriMaker = Request.TryGetUriMakerFor<ProjectsController>();
             var issueUriMaker = Request.TryGetUriMakerFor<IssuesController>();
-
             try
             {
                 IssueModel issue = DB_Gets.GetProjectIssueById(name, id);
 
-                issue.Href = issueUriMaker.UriFor(c => c.GetIssueById(name,id)).AbsoluteUri;
-                issue.Rel = "issues";
+                foreach (CommentModel comment in issue.comments)
+                {
+                    comment.Links.Add(new Link("edit_comment", issueUriMaker.UriFor(p => p.PutComment(name, id, comment.comment_id, null)).AbsolutePath));
+                    comment.Rel = "comments";
+                }
 
-                var projectUriMaker = Request.TryGetUriMakerFor<ProjectsController>();
-                var project_link = new Link("project "+name, projectUriMaker.UriFor(c => c.GetProjectByName(name, DEFAULT_PAGESIZE, 1)).AbsoluteUri);
-                issue.Links.Add(project_link);
+                issue.Links.Add(new Link("self", issueUriMaker.UriFor(c => c.GetIssueById(name, id)).AbsolutePath));
+                issue.Links.Add(new Link(name, projectUriMaker.UriFor(c => c.GetProjectByName(name, DEFAULT_PAGESIZE, 1)).AbsolutePath));
+                issue.Links.Add(new Link("all-projects", projectUriMaker.UriFor(c => c.GetAllProjects()).AbsolutePath));
+                issue.Links.Add(new Link("add_issue_tag", issueUriMaker.UriFor(c => c.PostTagInIssue(name,id,null)).AbsolutePath));
+                issue.Links.Add(new Link("delete_issue_tag", issueUriMaker.UriFor(c => c.DeleteTagFromIssue(name, id, null)).AbsolutePath));
+                issue.Links.Add(new Link("set_state", issueUriMaker.UriFor(c => c.PutStateIntoIssue(name, id, null)).AbsolutePath));
+                issue.Links.Add(new Link("post_comment", issueUriMaker.UriFor(p => p.PostComment(name, id, null)).AbsolutePath));
+                issue.Rel = "comments";
 
-                var all_projects_link = new Link("all-projects", projectUriMaker.UriFor(c => c.GetAllProjects()).AbsoluteUri);
-                issue.Links.Add(all_projects_link);
 
                 resp = Request.CreateResponse<IssueModel>(HttpStatusCode.OK, issue);
-
             }
             catch (MyException e)
             {
@@ -52,9 +57,8 @@ namespace DAW.Controllers
             }
             return resp;
         }
-
-
-        [HttpPost, Route("create")]
+        
+        [HttpPost, Route("post-issue")]
         public HttpResponseMessage PostIssue(string name, IssueModel model)
         {
             HttpResponseMessage resp;
@@ -73,10 +77,10 @@ namespace DAW.Controllers
                                     new JsonMediaTypeFormatter(),
                                     new MediaTypeHeaderValue("application/problem+json"));
             }
-            return null;
+            return resp;
         }
 
-        [HttpPost, Route("{id:int}/add-tag")]
+        [HttpPost, Route("{id:int}/post-tag")]
         public HttpResponseMessage PostTagInIssue(string name, int id, string tag)
         {
             HttpResponseMessage resp;
@@ -120,7 +124,7 @@ namespace DAW.Controllers
             return resp;
         }
 
-        [HttpPut, Route("{id:int}/re-state")]
+        [HttpPut, Route("{id:int}/set-state")]
         public HttpResponseMessage PutStateIntoIssue(string name, int id, string new_state)
         {
             HttpResponseMessage resp;
@@ -134,6 +138,51 @@ namespace DAW.Controllers
             {
                 ErrorModel error = e.GetError();
                 error.instance = uriMaker.UriFor(c => c.PutStateIntoIssue(name, id, new_state)).AbsoluteUri;
+                resp = Request.CreateResponse<ErrorModel>(
+                                    error.status, error,
+                                    new JsonMediaTypeFormatter(),
+                                    new MediaTypeHeaderValue("application/problem+json"));
+            }
+            return resp;
+        }
+
+        [HttpPut, Route("{id:int}/edit-comment")]
+        public HttpResponseMessage PutComment(string name, int id, int cid, CommentModel comment)
+        {
+            HttpResponseMessage resp;
+            var uriMaker = Request.TryGetUriMakerFor<IssuesController>();
+            try
+            {
+                comment.comment_id = cid;
+                DB_Puts.PutComment(name, id, comment);
+                resp = new HttpResponseMessage(HttpStatusCode.OK);
+            }
+            catch (MyException e)
+            {
+                ErrorModel error = e.GetError();
+                error.instance = uriMaker.UriFor(c => c.PutComment(name, id, cid, comment)).AbsoluteUri;
+                resp = Request.CreateResponse<ErrorModel>(
+                                    error.status, error,
+                                    new JsonMediaTypeFormatter(),
+                                    new MediaTypeHeaderValue("application/problem+json"));
+            }
+            return resp;
+        }
+        
+        [HttpPost, Route("{id:int}/post-comment")]
+        public HttpResponseMessage PostComment(string name, int id, CommentModel comment)
+        {
+            HttpResponseMessage resp;
+            var uriMaker = Request.TryGetUriMakerFor<IssuesController>();
+            try
+            {
+                DB_Posts.PostComment(name, id, comment);
+                resp = new HttpResponseMessage(HttpStatusCode.Created);
+            }
+            catch (MyException e)
+            {
+                ErrorModel error = e.GetError();
+                error.instance = uriMaker.UriFor(c => c.PostComment(name, id, comment)).AbsoluteUri;
                 resp = Request.CreateResponse<ErrorModel>(
                                     error.status, error,
                                     new JsonMediaTypeFormatter(),
